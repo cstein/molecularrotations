@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import math
 import numpy
 
 class QuaternionException(BaseException):
@@ -42,19 +43,25 @@ class Quaternion(object):
     w = numpy.cos(angle)
     return cls.fromWAndV(w,v)
 
-  def Magnitude(self):
-    return numpy.sqrt(self._w*self._w + numpy.dot(self._v,self._v))
+  def SquaredNorm(self):
+    return self._w*self._w + numpy.dot(self._v,self._v)
+
+  def Norm(self):
+    return math.sqrt(self.SquaredNorm())
 
   def Normalize(self):
-    magnitude = self.Magnitude()
+    magnitude = self.Norm()
     self._w /= magnitude
     self._v /= magnitude
 
   def isUnit(self):
-    return self.Magnitude() == 1.0
+    return self.Norm() == 1.0
 
   def getConjugate(self):
     return Quaternion(self._w, -self._v[0], -self._v[1], -self._v[2])
+
+  def getInverse(self):
+    return self.getConjugate() * (1.0/self.SquaredNorm())
 
   def rotateVector(self,vector_to_rotate):
     if not self.isUnit():
@@ -83,6 +90,10 @@ class Quaternion(object):
       w = self._w*other.W() - numpy.dot(self._v,other.V())
       v = self._w*other.V() + other.W()*self._v + numpy.cross(self._v, other.V())
       return Quaternion(w,v[0],v[1],v[2])
+    elif isinstance(other,int) or isinstance(other,float) or isinstance(other,numpy.float64):
+      w = self._w * other
+      v = self._v * other
+      return Quaternion(w,v[0],v[1],v[2])
     else:
       raise QuaternionException("Operation now allowed")
 
@@ -103,6 +114,7 @@ class TestQuaternion(unittest.TestCase):
   def setUp(self):
     self.q0 = Quaternion(1.0,0.0,0.0,0.0)
     self.q1 = Quaternion(1.0,1.0,1.0,1.0)
+    self.qn = Quaternion(0.5,2.0,-1.3,4.0)
 
   def test_BasicAccessorsCreationQ0(self):
     self.assertEqual(self.q0.W(), 1.0)
@@ -175,12 +187,12 @@ class TestQuaternion(unittest.TestCase):
     q = Quaternion.fromAngleAndVector(test_angle, test_vector)
     self.assertEqual(q,test_quaternion)
 
-  def test_QuaternionMagnitude(self):
-    self.assertEqual(self.q0.Magnitude(), 1.0)
-    self.assertEqual(self.q1.Magnitude(), 2.0)
+  def test_QuaternionNorm(self):
+    self.assertEqual(self.q0.Norm(), 1.0)
+    self.assertEqual(self.q1.Norm(), 2.0)
 
     q = Quaternion(1.0,1.0,0.0,0.0)
-    self.assertEqual(q.Magnitude(),numpy.sqrt(2.0))
+    self.assertEqual(q.Norm(),numpy.sqrt(2.0))
 
   def test_QuaternionNormalizeQ0(self):
     self.q0.Normalize()
@@ -188,7 +200,7 @@ class TestQuaternion(unittest.TestCase):
     self.assertEqual(self.q0.X(), 0.0)
     self.assertEqual(self.q0.Y(), 0.0)
     self.assertEqual(self.q0.Z(), 0.0)
-    self.assertEqual(self.q0.Magnitude(),1.0)
+    self.assertEqual(self.q0.Norm(),1.0)
 
   def test_QuaternionNormalizeQ1(self):
     self.q1.Normalize()
@@ -196,14 +208,23 @@ class TestQuaternion(unittest.TestCase):
     self.assertEqual(self.q1.X(), 0.5)
     self.assertEqual(self.q1.Y(), 0.5)
     self.assertEqual(self.q1.Z(), 0.5)
-    self.assertEqual(self.q1.Magnitude(),1.0)
+    self.assertEqual(self.q1.Norm(),1.0)
 
   def test_QuaternionGetConjugate(self):
     q2 = self.q1.getConjugate()
     self.assertEqual(q2.W(),  self.q1.W())
-    self.assertEqual(q2.Y(), -self.q1.X())
-    self.assertEqual(q2.X(), -self.q1.Y())
+    self.assertEqual(q2.Y(), -self.q1.Y())
+    self.assertEqual(q2.X(), -self.q1.X())
     self.assertEqual(q2.Z(), -self.q1.Z())
+
+  def test_QuaternionGetInverse(self):
+    q2 = self.q1.getConjugate()
+    norm2 = self.q1.SquaredNorm()
+    qi = self.q1.getInverse()
+    self.assertEqual(q2.W()/norm2, qi.W())
+    self.assertEqual(q2.X()/norm2, qi.X())
+    self.assertEqual(q2.Y()/norm2, qi.Y())
+    self.assertEqual(q2.Z()/norm2, qi.Z())
 
   def test_QuationIsUnit(self):
     self.assertTrue(self.q0.isUnit())
@@ -226,8 +247,8 @@ class TestQuaternion(unittest.TestCase):
     self.assertTrue(q1_test != self.q0)
 
   def test_QuaternionMultiplyRaisesException(self):
-    self.assertRaises(QuaternionException, self.q1.__mul__, 1)
-    self.assertRaises(QuaternionException, self.q1.__mul__, 1.0)
+    #self.assertRaises(QuaternionException, self.q1.__mul__, 1)
+    #self.assertRaises(QuaternionException, self.q1.__mul__, 1.0)
     self.assertRaises(QuaternionException, self.q1.__mul__, [])
     self.assertRaises(QuaternionException, self.q1.__mul__, ())
     self.assertRaises(QuaternionException, self.q1.__mul__, {})
