@@ -28,6 +28,9 @@ class Quaternion(object):
   def V(self):
     return self._v
 
+  def as4Vector(self):
+    return numpy.array(self.W(),self.X(),self.Y(),self.Z())
+
   @classmethod
   def fromWAndV(cls,w,v):
     if not isinstance(v,numpy.ndarray):
@@ -55,7 +58,8 @@ class Quaternion(object):
     self._v /= magnitude
 
   def isUnit(self):
-    return self.Norm() == 1.0
+    threshold = 1.0e-6
+    return abs(self.Norm() - 1.0) < threshold
 
   def getConjugate(self):
     return Quaternion(self._w, -self._v[0], -self._v[1], -self._v[2])
@@ -72,6 +76,13 @@ class Quaternion(object):
     rhs = q_vector_to_rotate * self.getConjugate()
     rotated_quaternion = self*rhs
     return rotated_quaternion.V()
+
+  def as4Matrix(self):
+    # return 4x4 real matrix representation
+    return numpy.array([[ self._w, self._v[0], self._v[1], self._v[2]],
+                        [-self._v[0], self._w, -self._v[2], self._v[1]],
+                        [-self._v[1], self._v[2], self._w, -self._v[0]],
+                        [-self._v[2], -self._v[1], self._v[0], self._w]])
 
   ### override __xxx__ to imitate behavior of real math
   def __eq__(self,other):
@@ -229,8 +240,11 @@ class TestQuaternion(unittest.TestCase):
   def test_QuationIsUnit(self):
     self.assertTrue(self.q0.isUnit())
     self.assertFalse(self.q1.isUnit())
+    self.assertFalse(self.qn.isUnit())
     self.q1.Normalize()
+    self.qn.Normalize()
     self.assertTrue(self.q1.isUnit())
+    self.assertTrue(self.qn.isUnit())
 
   def test_QuaternionsEqual(self):
     q1_test = Quaternion(1.0,1.0,1.0,1.0)
@@ -245,6 +259,13 @@ class TestQuaternion(unittest.TestCase):
     self.assertFalse(q1_test != self.q1)
     self.assertTrue(self.q0 != q1_test)
     self.assertTrue(q1_test != self.q0)
+
+  def test_QuaternionAs4Matrix(self):
+    qmat = numpy.array([[0.5,2.0,-1.3,4.0],
+                        [-2.0,0.5,-4.0,-1.3],
+                        [ 1.3,4.0,0.5,-2.0 ],
+                        [-4.0,1.3,2.0,0.5]])
+    self.assertTrue(numpy.allclose(self.qn.as4Matrix(),qmat))
 
   def test_QuaternionMultiplyRaisesException(self):
     #self.assertRaises(QuaternionException, self.q1.__mul__, 1)
