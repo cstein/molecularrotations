@@ -80,7 +80,7 @@ class Vector(object):
       raise VectorException("Operation now allowed")
 
 import unittest
-class TestVectorClass(unittest.TestCase):
+class TestVector(unittest.TestCase):
   def setUp(self):
     self.v0 = Vector(0.0,0.0,0.0)
     self.v1 = Vector(1.0,1.0,1.0)
