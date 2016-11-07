@@ -29,7 +29,7 @@ class Quaternion(object):
     return self._v
 
   def as4Vector(self):
-    return numpy.array(self.W(),self.X(),self.Y(),self.Z())
+    return numpy.array([self.W(),self.X(),self.Y(),self.Z()])
 
   @classmethod
   def fromWAndV(cls,w,v):
@@ -45,6 +45,12 @@ class Quaternion(object):
     v = numpy.sin(angle)*vector.V()
     w = numpy.cos(angle)
     return cls.fromWAndV(w,v)
+
+  @classmethod
+  def from4Vector(cls,v):
+    if not isinstance(v, numpy.ndarray):
+      raise TypeError("argument v must be of %s but user supplied %s" % (type(numpy.array([1])),type(v)))
+    return cls(v[0], v[1], v[2], v[3])
 
   def SquaredNorm(self):
     return self._w*self._w + numpy.dot(self._v,self._v)
@@ -197,6 +203,11 @@ class TestQuaternion(unittest.TestCase):
     test_quaternion = Quaternion(0.5,0.5,0.5,0.5)
     q = Quaternion.fromAngleAndVector(test_angle, test_vector)
     self.assertEqual(q,test_quaternion)
+
+  def test_CreateQuaternionFrom4Vector(self):
+    v = numpy.arange(0,4, dtype=float)
+    q = Quaternion.from4Vector(v)
+    self.assertTrue(numpy.allclose(v, q.as4Vector()))
 
   def test_QuaternionNorm(self):
     self.assertEqual(self.q0.Norm(), 1.0)
