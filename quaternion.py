@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import math
-import numpy
-
 import unittest
+
+import numpy
 
 
 class QuaternionException(BaseException):

@@ -1,7 +1,11 @@
+import unittest
+
 import numpy
+
 
 class VectorException(BaseException):
     pass
+
 
 class Vector(object):
     def __init__(self,x,y,z):
@@ -31,7 +35,7 @@ class Vector(object):
         self._y /= magnitude
         self._z /= magnitude
 
-    ### __XXX__ overrides
+    # __XXX__ overrides
     def __repr__(self):
         return "Vector(%f,%f,%f)" % (self._x, self._y, self._z)
 
@@ -79,7 +83,6 @@ class Vector(object):
         else:
             raise VectorException("Operation now allowed")
 
-import unittest
 class TestVector(unittest.TestCase):
     def setUp(self):
         self.v0 = Vector(0.0,0.0,0.0)
